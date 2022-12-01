@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# API KEY
+.env
+my_api.py
+
+# Immagini
+immagini/
+photo.png
+photo.txt
