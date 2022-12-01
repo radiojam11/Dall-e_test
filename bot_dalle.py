@@ -78,7 +78,7 @@ def handle(msg):
                     chat_id, "Si è verificato un problema,\nnon ho l'immagine.\nPerdono!")
         else:
             bot.sendMessage(
-                chat_id, "Non hai richiesto una nuova immagine, \noppure la richiesta non è andata a buon fine.\nCiao")
+                chat_id, "Non hai richiesto una nuova immagine, \noppure la richiesta non è andata a buon fine.\n\nTi ricordo che la richiesta deve essere preceduta da #vogliounaimmagine\ne deve essere formulata in lingua inglese\n\nCiao")
 
 
 # faccio partire il Bot e aspetto messaggi in arrivo
