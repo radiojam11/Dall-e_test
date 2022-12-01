@@ -4,8 +4,9 @@ from time import time, sleep
 import os
 import openai
 import telepot
-import my_api.easyig_bot_API_KEY as token
-import my_api.OpenAi_API_KEY as openaiApiKey
+import my_api
+token = my_api.easyig_bot_API_KEY
+openaiApiKey = my_api.OpenAi_API_KEY
 
 
 def downloadImage(url, prompt):
