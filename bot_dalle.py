@@ -4,12 +4,16 @@ from time import time, sleep
 import os
 import openai
 import telepot
+import logging
 import my_api
 token = my_api.easyig_bot_API_KEY
 openaiApiKey = my_api.OpenAi_API_KEY
 
+logging.basicConfig(filename='bot.log', filemode='a', level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-def downloadImage(url, prompt):
+
+def downloadImage(url, prompt, chat_id, from_name, from_username):
     """Scarica e salva su disco l'immagine creata da AI"""
     nome_file = str(int(time()))
     # salvo nella cartella immagini
@@ -18,7 +22,8 @@ def downloadImage(url, prompt):
     f.write(response.content)
     f.close()
     f = open(f'immagini/{nome_file}.txt', 'w')
-    f.write(prompt)
+    f.write('Username:'+from_username+' Name:'+from_name +
+            ' Chat_Id:'+str(chat_id)+' Testo Richiesta:'+prompt)
     f.close()
     # salvo immagine per successivo invio in chat
     f = open('photo.png', 'wb')
@@ -27,12 +32,13 @@ def downloadImage(url, prompt):
     f = open('photo.txt', 'w')
     f.write(prompt)
     f.close()
-
-    print("download successful")
+    logging.info(
+        f'{from_username} - {from_name} - {chat_id} - {prompt} - download successful')
+    #print("download successful")
     return True
 
 
-def getNewImage(prompt, n=1, size="512x512"):
+def getNewImage(prompt, chat_id, from_name, from_username, n=1, size="512x512"):
     """crea la connessione con Dall-e, 
     richiede una nuova immagine descritta nel prompt, 
     della grandess definita in size, e 
@@ -45,11 +51,14 @@ def getNewImage(prompt, n=1, size="512x512"):
         # size="1024x1024"
         size=size
     )
+    logging.info(
+        f'{from_username} - {from_name} - {chat_id} - {prompt} - OpenAi response received')
     stringa = json.dumps(response)
     dizionario = json.loads(stringa)
     for el in dizionario['data']:
         image_url = el['url']
-        imgReceived = downloadImage(image_url, prompt)
+        imgReceived = downloadImage(
+            image_url, prompt, chat_id, from_name, from_username)
     return True
 
 
@@ -69,16 +78,22 @@ def handle(msg):
                 chat_id, "Sto Creando una immagine con queste caratteristiche \n" + prompt)
             bot.sendMessage(
                 chat_id, "Ci vuole qualche decina di secondi..... Aspetta!")
-            if getNewImage(prompt):
+            if getNewImage(prompt, chat_id, from_name, from_username):
                 photo = open('photo.png', 'rb')
                 bot.sendPhoto(chat_id, photo=photo)
                 photo.close()
+                logging.info(
+                    f"{from_username} - {from_name} - {chat_id} - {prompt} - Processo di creazione dell'immagine andato a buon fine")
             else:
                 bot.sendMessage(
                     chat_id, "Si è verificato un problema,\nnon ho l'immagine.\nPerdono!")
+                logging.info(
+                    f"{from_username} - {from_name} - {chat_id} - {prompt} - Processo di creazione dell'immagine Fallito")
         else:
             bot.sendMessage(
                 chat_id, "Non hai richiesto una nuova immagine, \noppure la richiesta non è andata a buon fine.\n\nTi ricordo che la richiesta deve essere preceduta da #vogliounaimmagine\ne deve essere formulata in lingua inglese\n\nCiao")
+            logging.info(
+                f"{from_username} - {from_name} - {chat_id} - {prompt} - Uncorrect requests - nessun risultato inviato")
 
 
 # faccio partire il Bot e aspetto messaggi in arrivo
@@ -86,7 +101,8 @@ def handle(msg):
 TOKEN = token
 bot = telepot.Bot(TOKEN)
 bot.message_loop(handle)
-print('Listening ...')
+logging.info("Start Listening on Telegram ..")
+#print('Listening ...')
 # tengo vivo il programma semplicemente aspettando
 while 1:
     sleep(10)
