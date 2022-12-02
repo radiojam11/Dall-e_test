@@ -32,6 +32,10 @@ def downloadImage(url, prompt, chat_id, from_name, from_username):
     f = open('photo.txt', 'w')
     f.write(prompt)
     f.close()
+    # creo una lista di utenti che hanno utilizzato il servizio
+    f = open("users.log", "a")
+    f.write(f"@{from_username},")
+    f.close()
     logging.info(
         f'{from_username} - {from_name} - {chat_id} - {prompt} - download successful')
     #print("download successful")
@@ -63,37 +67,42 @@ def getNewImage(prompt, chat_id, from_name, from_username, n=1, size="512x512"):
 
 
 def handle(msg):
-    content_type, chat_type, chat_id = telepot.glance(msg)
-    if content_type == 'text':
-        msg_received = msg['text']
-        from_name = msg['from']['first_name']
-        from_username = msg['from']['username']
-        bot.sendMessage(
-            chat_id, f"Grazie per il tuo messaggio {from_name}, \nElaboro...")
-        if "#vogliounaimmagine" in msg_received:
+    try:
+        content_type, chat_type, chat_id = telepot.glance(msg)
+        if content_type == 'text':
+            msg_received = msg['text']
+            from_name = msg['from']['first_name']
+            from_username = msg['from']['username']
             bot.sendMessage(
-                chat_id, "Ho ricevuto il tuo testo\nAdesso controllo se è valido.....")
-            prompt = msg_received[18:]
-            bot.sendMessage(
-                chat_id, "Sto Creando una immagine con queste caratteristiche \n" + prompt)
-            bot.sendMessage(
-                chat_id, "Ci vuole qualche decina di secondi..... Aspetta!")
-            if getNewImage(prompt, chat_id, from_name, from_username):
-                photo = open('photo.png', 'rb')
-                bot.sendPhoto(chat_id, photo=photo)
-                photo.close()
-                logging.info(
-                    f"{from_username} - {from_name} - {chat_id} - {prompt} - Processo di creazione dell'immagine andato a buon fine")
+                chat_id, f"Grazie per il tuo messaggio {from_name}, \nElaboro...")
+            if "#vogliounaimmagine" in msg_received:
+                bot.sendMessage(
+                    chat_id, "Ho ricevuto il tuo testo\nAdesso controllo se è valido.....")
+                prompt = msg_received[18:]
+                bot.sendMessage(
+                    chat_id, "Sto Creando una immagine con queste caratteristiche \n" + prompt)
+                bot.sendMessage(
+                    chat_id, "Ci vuole qualche decina di secondi..... Aspetta!")
+                if getNewImage(prompt, chat_id, from_name, from_username):
+                    photo = open('photo.png', 'rb')
+                    bot.sendPhoto(chat_id, photo=photo)
+                    photo.close()
+                    logging.info(
+                        f"{from_username} - {from_name} - {chat_id} - {prompt} - Processo di creazione dell'immagine andato a buon fine")
+                else:
+                    bot.sendMessage(
+                        chat_id, "Si è verificato un problema,\nnon ho l'immagine.\nPerdono!")
+                    logging.info(
+                        f"{from_username} - {from_name} - {chat_id} - {prompt} - Processo di creazione dell'immagine Fallito")
+            elif "#utenti" in msg_received:
+                pass
             else:
                 bot.sendMessage(
-                    chat_id, "Si è verificato un problema,\nnon ho l'immagine.\nPerdono!")
+                    chat_id, "Non hai richiesto una nuova immagine, \noppure la richiesta non è andata a buon fine.\n\nTi ricordo che la richiesta deve essere preceduta da #vogliounaimmagine\ne deve essere formulata in lingua inglese\n\nCiao")
                 logging.info(
-                    f"{from_username} - {from_name} - {chat_id} - {prompt} - Processo di creazione dell'immagine Fallito")
-        else:
-            bot.sendMessage(
-                chat_id, "Non hai richiesto una nuova immagine, \noppure la richiesta non è andata a buon fine.\n\nTi ricordo che la richiesta deve essere preceduta da #vogliounaimmagine\ne deve essere formulata in lingua inglese\n\nCiao")
-            logging.info(
-                f"{from_username} - {from_name} - {chat_id} - {prompt} - Uncorrect requests - nessun risultato inviato")
+                    f"{from_username} - {from_name} - {chat_id} - {prompt} - Uncorrect requests - nessun risultato inviato")
+    except Exception as e:
+        logging.warning("*****ECCEZIONE NELLA FUNZIONE handle(): " + e)
 
 
 # faccio partire il Bot e aspetto messaggi in arrivo
