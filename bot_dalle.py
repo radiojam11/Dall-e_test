@@ -79,8 +79,8 @@ def handle(msg):
             from_username = msg['from']['username']
             bot.sendMessage(
                 chat_id, f"Grazie per il tuo messaggio {from_name}, \nElaboro...")
-            if "#vogliounaimmagine" in msg_received:
-                prompt = msg_received[18:]
+            if "#getimage" in msg_received:
+                prompt = msg_received[9:]
                 if len(prompt) > 15:
                     bot.sendMessage(
                         chat_id, "Ho ricevuto il tuo testo\nAdesso controllo se è valido.....")
@@ -107,12 +107,15 @@ def handle(msg):
                         chat_id, "La descrizione dell'immagine non è sufficiente,\ndefinisci meglio cosa vuoi ottenere,\nmeglio descrivi la tua immagine e più carina verrà\nricordati di scrivere in inglese")
                     logging.info(
                         f"{from_username} - {from_name} - {chat_id} - {msg_received} - Uncorrect requests - nessun risultato inviato")
-            elif "#utenti" in msg_received:
-                pass
+            elif "#users" in msg_received:
+                f = open("users.log", "r")
+                bot.sendMessage(
+                    chat_id, f.read())
+
             else:
                 saveUsers(from_username)
                 bot.sendMessage(
-                    chat_id, "Non hai richiesto una nuova immagine, \noppure la richiesta non è andata a buon fine.\n\nTi ricordo che la richiesta deve essere preceduta da #vogliounaimmagine\ne deve essere formulata in lingua inglese\n\nCiao")
+                    chat_id, "Non hai richiesto una nuova immagine, \noppure la richiesta non è andata a buon fine.\n\nTi ricordo che la richiesta deve essere preceduta da #getimage\ne deve essere formulata in lingua inglese\n\nCiao")
                 logging.info(
                     f"{from_username} - {from_name} - {chat_id} - {msg_received} - Uncorrect requests - nessun risultato inviato")
     except Exception as e:
