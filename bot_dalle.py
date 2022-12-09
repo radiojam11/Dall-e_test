@@ -77,11 +77,13 @@ def handle(msg):
             msg_received = msg['text']
             from_name = msg['from']['first_name']
             from_username = msg['from']['username']
-            bot.sendMessage(
-                chat_id, f"Grazie per il tuo messaggio {from_name}, \nElaboro...")
+            if "/start" in msg_received:
+                bot.sendMessage(
+                    chat_id, f"Grazie aver iniziato questa chat {from_name}, \nTi ricordo che per ottenere la tua immagine\ndevi iniziare il messaggio con #getimage e descrivere al meglio ciò che vuoi ottenere\n\nSe non riterrò valida la descrizione dovrai modificarla ")
+                return
             if "#getimage" in msg_received:
                 prompt = msg_received[9:]
-                if len(prompt) > 15:
+                if len(prompt) > 40:
                     bot.sendMessage(
                         chat_id, "Ho ricevuto il tuo testo\nAdesso controllo se è valido.....")
 
