@@ -32,7 +32,6 @@ def downloadImage(url, prompt, chat_id, from_name, from_username):
     f = open('photo.txt', 'w')
     f.write(prompt)
     f.close()
-    saveUsers(from_username)
     logging.info(
         f'{from_username} - {from_name} - {chat_id} - {prompt} - download successful')
     #print("download successful")
@@ -44,6 +43,33 @@ def saveUsers(from_username):
     f = open("users.log", "a")
     f.write(f"@{from_username},")
     f.close()
+
+
+def saveSingleUsers():
+    f = open("users.log", "r")
+    users = f.read()
+    f.close()
+    dirtyUsersList = users.split(sep=",")
+    usersDict = {}
+    for el in dirtyUsersList:
+        if el in usersDict:
+            usersDict[el] += 1
+        else:
+            usersDict[el] = 0
+    f = open("singleUsers.log", "w")
+    json.dump(usersDict, f)
+    f.close()
+    stringa = json.dumps(usersDict)
+    return stringa
+
+
+def readLog(param=1):
+    f = open("bot.log", "r")
+    log = f.read()
+    f.close()
+    if param == 1:
+        log = log[-1500:]
+    return log
 
 
 def getNewImage(prompt, chat_id, from_name, from_username, n=1, size="512x512"):
@@ -73,24 +99,45 @@ def getNewImage(prompt, chat_id, from_name, from_username, n=1, size="512x512"):
 def handle(msg):
     try:
         content_type, chat_type, chat_id = telepot.glance(msg)
+        from_name = msg['from']['first_name']
+        from_username = msg['from']['username']
+        saveUsers(from_username)
+
         if content_type == 'text':
             msg_received = msg['text']
-            from_name = msg['from']['first_name']
-            from_username = msg['from']['username']
+
             if "/start" in msg_received:
                 bot.sendMessage(
                     chat_id, f"Grazie aver iniziato questa chat {from_name}, \nTi ricordo che per ottenere la tua immagine\ndevi iniziare il messaggio con #getimage e descrivere al meglio ciò che vuoi ottenere\n\nSe non riterrò valida la descrizione dovrai modificarla ")
+                logging.info(
+                    f'{from_username} - {from_name} - {chat_id} - Ricevuta richiesta /start')
                 return
+            if "/users" in msg_received:
+                testo = saveSingleUsers()
+                bot.sendMessage(chat_id, testo)
+                logging.info(
+                    f'{from_username} - {from_name} - {chat_id} - Ricevuta richiesta /users')
+                return
+            if "/log" in msg_received:
+                param = msg_received[4:]
+                if param.isnumeric():
+                    stringa = readLog(param)
+                else:
+                    stringa = readLog(param=1)
+                bot.sendMessage(
+                    chat_id, stringa)
+                logging.info(
+                    f'{from_username} - {from_name} - {chat_id} - Ricevuta richiesta /log')
+                return
+
             if "#getimage" in msg_received:
                 prompt = msg_received[9:]
                 if len(prompt) > 40:
                     bot.sendMessage(
                         chat_id, "Ho ricevuto il tuo testo\nAdesso controllo se è valido.....")
-
+                    sleep(5)
                     bot.sendMessage(
-                        chat_id, "Sto Creando una immagine con queste caratteristiche \n" + prompt)
-                    bot.sendMessage(
-                        chat_id, "Ci vuole qualche decina di secondi..... Aspetta!")
+                        chat_id, f"OK! {from_name} - : adesso Creo una immagine con queste caratteristiche \n" + prompt + "Ci vorrà qualche decina di secondi.....\nAspetta!")
                     if getNewImage(prompt, chat_id, from_name, from_username):
                         photo = open('photo.png', 'rb')
                         bot.sendPhoto(chat_id, photo=photo)
@@ -98,30 +145,25 @@ def handle(msg):
                         logging.info(
                             f"{from_username} - {from_name} - {chat_id} - {prompt} - Processo di creazione dell'immagine andato a buon fine")
                     else:
-                        saveUsers(from_username)
                         bot.sendMessage(
-                            chat_id, "Si è verificato un problema,\nnon ho l'immagine.\nPerdono!")
+                            chat_id, f"{from_name} - Si è verificato un problema,\nnon ho l'immagine.\nPerdono!")
                         logging.info(
                             f"{from_username} - {from_name} - {chat_id} - {prompt} - Processo di creazione dell'immagine Fallito")
                 else:
-                    saveUsers(from_username)
                     bot.sendMessage(
                         chat_id, "La descrizione dell'immagine non è sufficiente,\ndefinisci meglio cosa vuoi ottenere,\nmeglio descrivi la tua immagine e più carina verrà\nricordati di scrivere in inglese")
                     logging.info(
                         f"{from_username} - {from_name} - {chat_id} - {msg_received} - Uncorrect requests - nessun risultato inviato")
-            elif "#users" in msg_received:
-                f = open("users.log", "r")
-                bot.sendMessage(
-                    chat_id, f.read())
 
             else:
-                saveUsers(from_username)
                 bot.sendMessage(
-                    chat_id, "Non hai richiesto una nuova immagine, \noppure la richiesta non è andata a buon fine.\n\nTi ricordo che la richiesta deve essere preceduta da #getimage\ne deve essere formulata in lingua inglese\n\nCiao")
+                    chat_id, f"{from_name} - Non ho riconosciuto la tua richiesta\n\nTi ricordo che la richiesta deve essere preceduta da #getimage\ne deve essere il più possibile dettagliata\nper ottenere una immagine migliore")
                 logging.info(
-                    f"{from_username} - {from_name} - {chat_id} - {msg_received} - Uncorrect requests - nessun risultato inviato")
+                    f"{from_username} - {from_name} - {chat_id} - {msg_received} - Richiesta non Riconosciuta - nessun risultato inviato")
     except Exception as e:
-        logging.warning("*****ECCEZIONE NELLA FUNZIONE handle(): " + e)
+        logging.warning("*****ECCEZIONE NELLA FUNZIONE handle():   ")
+        logging.warning(e)
+        bot.sendMessage(chat_id, "Operazione Fallita - eccezione ricevuta")
 
 
 # faccio partire il Bot e aspetto messaggi in arrivo
